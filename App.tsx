@@ -24,7 +24,8 @@ import {
   FileOutput,
   Bot,
   Sparkles,
-  ShieldAlert
+  ShieldAlert,
+  Globe
 } from 'lucide-react';
 import { setAuthToken } from './services/api';
 import { AuthScreen } from './components/AuthScreen';

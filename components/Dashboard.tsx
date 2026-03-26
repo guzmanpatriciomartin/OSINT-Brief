@@ -34,6 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
 
   useEffect(() => {
     const initDashboard = async () => {
@@ -89,9 +90,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     localStorage.setItem('dashboard_layout_v2', JSON.stringify(newLayout));
   };
 
-  const handleUpdateWidget = (config: WidgetConfig) => {
-    const newLayout = layout.map(w => w.id === config.id ? config : w);
+  const handleSaveWidget = (config: WidgetConfig) => {
+    const exists = layout.find(w => w.id === config.id);
+    let newLayout;
+    if (exists) {
+      newLayout = layout.map(w => w.id === config.id ? config : w);
+    } else {
+      newLayout = [...layout, config];
+    }
     persistLayout(newLayout);
+    setEditingWidget(null);
+  };
+
+  const handleEditWidget = (widget: WidgetConfig) => {
+    setEditingWidget(widget);
+    setModalOpen(true);
+  };
+
+  const handleAddWidget = () => {
+    setEditingWidget(null);
+    setModalOpen(true);
+  };
+
+  const handleResetLayout = () => {
+    if (window.confirm('¿Restablecer el diseño original? Se perderán tus personalizaciones.')) {
+      persistLayout(DEFAULT_LAYOUT);
+    }
   };
 
   const handleDeleteWidget = (id: string) => {
@@ -196,9 +220,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
         <div className="flex gap-2">
             {isEditMode ? (
-                <button onClick={() => setIsEditMode(false)} className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-100">Guardar Cambios</button>
+                <>
+                    <button 
+                        onClick={handleAddWidget} 
+                        className="px-4 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold shadow-lg shadow-green-100 flex items-center gap-1"
+                    >
+                        <Plus className="w-3.5 h-3.5" /> Añadir Widget
+                    </button>
+                    <button 
+                        onClick={handleResetLayout} 
+                        className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 flex items-center gap-1"
+                    >
+                        <RotateCcw className="w-3.5 h-3.5" /> Restablecer
+                    </button>
+                    <button 
+                        onClick={() => setIsEditMode(false)} 
+                        className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-100"
+                    >
+                        Guardar Cambios
+                    </button>
+                </>
             ) : (
-                <button onClick={() => setIsEditMode(true)} className="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-50">Personalizar</button>
+                <button onClick={() => setIsEditMode(true)} className="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-1">
+                    <Settings className="w-3.5 h-3.5" /> Personalizar
+                </button>
             )}
         </div>
       </div>
@@ -216,7 +261,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             {widget.title}
                         </h3>
                         {isEditMode && (
-                            <button onClick={() => handleDeleteWidget(widget.id)} className="p-1 text-red-400 hover:text-red-600"><X className="w-4 h-4" /></button>
+                            <div className="flex gap-1">
+                                <button 
+                                    onClick={() => handleEditWidget(widget)} 
+                                    className="p-1 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                    title="Editar Widget"
+                                >
+                                    <Settings className="w-3.5 h-3.5" />
+                                </button>
+                                <button 
+                                    onClick={() => handleDeleteWidget(widget.id)} 
+                                    className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Eliminar Widget"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         )}
                     </div>
                     <div className="flex-1 relative overflow-hidden">
@@ -227,7 +287,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         })}
       </div>
 
-      <WidgetConfigModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSave={handleUpdateWidget} />
+      <WidgetConfigModal 
+        isOpen={modalOpen} 
+        onClose={() => { setModalOpen(false); setEditingWidget(null); }} 
+        onSave={handleSaveWidget} 
+        initialConfig={editingWidget}
+      />
     </div>
   );
 };
