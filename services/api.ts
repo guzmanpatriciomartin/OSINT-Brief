@@ -5,7 +5,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 const API_BASE_URL = '/api';
 
 // Inicialización de la IA siguiendo las guías de @google/genai
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+const geminiApiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
+const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
 let authToken: string | null = localStorage.getItem('authToken');
 
@@ -96,6 +97,7 @@ export const fetchDigest = async (days: number): Promise<NewsItem[]> => fetchRes
 // --- IA LOGIC ---
 
 export const getAIBriefing = async (newsItems: NewsItem[]): Promise<string> => {
+  if (!ai) return "IA no configurada (API Key faltante).";
   const newsContent = newsItems.slice(0, 15).map(item => `- [${item.feedTitle}] ${item.title}: ${item.description?.substring(0, 150)}`).join('\n');
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -108,6 +110,7 @@ export const getAIBriefing = async (newsItems: NewsItem[]): Promise<string> => {
 };
 
 export const performAITriage = async (url: string, newsItem?: NewsItem): Promise<{ type: string; data: any }> => {
+  if (!ai) throw new Error("IA no configurada (API Key faltante).");
   // 1. SCRAPING STEP
   let scrapedContent = "";
   try {

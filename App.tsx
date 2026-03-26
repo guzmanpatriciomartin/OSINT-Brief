@@ -5,7 +5,6 @@ import { Observatory } from './components/Observatory';
 import { Risks } from './components/Risks';
 import { Reports } from './components/Reports';
 import { AIAnalyst } from './components/AIAnalyst';
-import { IntelligenceDigest } from './components/IntelligenceDigest';
 import { CTIEngine } from './components/CTIEngine';
 import { ResourceManager, ColumnDef, FormField } from './components/ResourceManager';
 import { TabName, NewsItem } from './types';
@@ -190,7 +189,6 @@ const App: React.FC = () => {
 
   const NAV_ITEMS: { id: TabName; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'intelligence-digest', label: 'Intelligence Hub', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
     { id: 'cti-engine', label: 'CTI Engine', icon: <ShieldAlert className="w-4 h-4 text-blue-400" /> },
     { id: 'ai-analyst', label: 'Analista IA', icon: <Bot className="w-4 h-4 text-purple-400" /> },
     { id: 'observatorio', label: 'Observatorio', icon: <Eye className="w-4 h-4 text-indigo-300" /> },
@@ -208,7 +206,6 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard onNavigate={handleNavigate} />;
-      case 'intelligence-digest': return <IntelligenceDigest />;
       case 'cti-engine': return <CTIEngine />;
       case 'ai-analyst': return <AIAnalyst />;
       case 'observatorio': return <Observatory onCreateRisk={handleCreateRiskFromNews} />;

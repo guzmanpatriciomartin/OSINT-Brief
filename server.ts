@@ -339,9 +339,7 @@ apiRouter.post("/generate-cti", async (req, res) => {
         
         ESTRUCTURA DE SALIDA OBLIGATORIA (Markdown):
         
-        # Alerta CTI - [CVE-ID]
-
-        ## Resumen Ejecutivo
+                ## Resumen Ejecutivo
         Breve descripción de la vulnerabilidad, indicando el componente afectado, tipo de falla y nivel de riesgo.
         Nota: Indica explícitamente si se encuentra o no en el catálogo CISA KEV.
 

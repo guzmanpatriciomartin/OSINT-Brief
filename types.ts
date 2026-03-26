@@ -45,7 +45,6 @@ export type TabName =
   | 'riesgos'
   | 'reporte'
   | 'ai-analyst'
-  | 'intelligence-digest'
   | 'cti-engine';
 
 export type WidgetType = 'chart' | 'table' | 'special';
