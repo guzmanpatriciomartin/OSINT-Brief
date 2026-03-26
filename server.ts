@@ -60,6 +60,7 @@ mongoose.connect(MONGO_URI)
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(pathModule.join(__dirname, 'public')));
 
 const FE_DIST_PATH = pathModule.join(__dirname, 'dist');
 

@@ -68,7 +68,7 @@ export const Reports: React.FC = () => {
     
     try {
       const data = await fetchAllData(true);
-      generateDetailedPDF(data, startDate, endDate);
+      await generateDetailedPDF(data, startDate, endDate);
       setStatusMsg('PDF generado correctamente.');
     } catch (e) {
       console.error(e);
@@ -106,12 +106,38 @@ export const Reports: React.FC = () => {
     return 'Info';
   };
 
-  const generateDetailedPDF = (data: Record<string, any[]>, startDateStr: string, endDateStr: string) => {
+  const generateDetailedPDF = async (data: Record<string, any[]>, startDateStr: string, endDateStr: string) => {
     const doc = new jsPDF('p', 'pt', 'a4');
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     const margin = 45;
     let yPos = 0;
+
+    // Helper to load image as Base64
+    const loadImage = (url: string): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject('No se pudo obtener el contexto 2D');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.onerror = () => reject('Error al cargar la imagen: ' + url);
+        img.src = url;
+      });
+    };
+
+    let bgImageBase64 = '';
+    try {
+      bgImageBase64 = await loadImage(BACKGROUND_IMAGE_PATH);
+    } catch (err) {
+      console.warn('No se pudo cargar la imagen de fondo, se generará el PDF sin ella:', err);
+    }
 
     const COLOR_PRIMARY_PURPLE = '#6A3093';
     const COLOR_BLACK = '#1c1c1c';
@@ -263,7 +289,9 @@ export const Reports: React.FC = () => {
     };
 
     // --- PAGE 1: COVER ---
-    doc.addImage(BACKGROUND_IMAGE_PATH, 'JPEG', 0, 0, pageWidth, 250); 
+    if (bgImageBase64) {
+      doc.addImage(bgImageBase64, 'JPEG', 0, 0, pageWidth, 250); 
+    }
 
     doc.setFontSize(FONT_H1);
     doc.setFont('helvetica', 'bold');
