@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-// Cadena de conexión extraída de tu server.js
-const MONGO_URI = "mongodb+srv://joaquinscarrizo02_db_user:TFFUE8OLVOUdpsow@dbbrief.ul4p4gp.mongodb.net/?retryWrites=true&w=majority&appName=DBBrief";
+// Cadena de conexión extraída de variables de entorno
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/osint-brief";
 
 // Definimos el esquema mínimo necesario para este script
 const rssFeedSchema = new mongoose.Schema({
