@@ -370,17 +370,21 @@ export const ResourceManager: React.FC<ResourceManagerProps> = ({
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                     />
                   ) : field.type === 'select' ? (
-                    <select
-                      required={field.required}
-                      value={formData[field.name] || ''}
-                      onChange={e => setFormData({...formData, [field.name]: e.target.value})}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {field.options?.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <input
+                        list={`list-${field.name}`}
+                        required={field.required}
+                        value={formData[field.name] || ''}
+                        onChange={e => setFormData({...formData, [field.name]: e.target.value})}
+                        placeholder="Seleccionar o escribir..."
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                      />
+                      <datalist id={`list-${field.name}`}>
+                        {field.options?.map(opt => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    </div>
                   ) : (
                     <input
                       type={field.type}

@@ -41,10 +41,10 @@ const INCIDENTS_CONFIG = {
   ] as ColumnDef[],
   fields: [
     { label: 'Fecha', name: 'fecha', type: 'date', required: true },
-    { label: 'Tipo', name: 'tipo', type: 'text', required: true },
+    { label: 'Tipo', name: 'tipo', type: 'select', options: ['Ransomware', 'Phishing', 'Data Breach', 'DDoS', 'Malware', 'Defacement', 'Supply Chain', 'Espionaje', 'Insider Threat', 'Business Email Compromise (BEC)', 'Credential Stuffing', 'SQL Injection', 'Zero-Day Exploit', 'Otro'], required: true },
     { label: 'Entidad Afectada', name: 'entidad', type: 'text', required: true },
     { label: 'País', name: 'pais', type: 'text' },
-    { label: 'Sector', name: 'sector', type: 'text' },
+    { label: 'Sector', name: 'sector', type: 'select', options: ['Financiero', 'Salud', 'Gobierno', 'Energía', 'Tecnología', 'Educación', 'Manufactura', 'Telecomunicaciones', 'Retail', 'Transporte', 'Defensa', 'Infraestructura Crítica', 'Otro'] },
     { label: 'Actor de Amenazas', name: 'actor', type: 'text' },
     { label: 'Datos Comprometidos', name: 'datosComprometidos', type: 'text' },
     { label: 'Descripción', name: 'descripcion', type: 'textarea', required: true },
@@ -63,8 +63,8 @@ const EXPLOITS_CONFIG = {
   fields: [
     { label: 'Fecha', name: 'fecha', type: 'date', required: true },
     { label: 'Nombre Exploit', name: 'nombre', type: 'text', required: true },
-    { label: 'Tipo', name: 'tipo', type: 'text' },
-    { label: 'Plataforma', name: 'plataforma', type: 'text' },
+    { label: 'Tipo', name: 'tipo', type: 'select', options: ['RCE (Remote Code Execution)', 'LPE (Local Privilege Escalation)', 'DoS (Denial of Service)', 'SQLi', 'XSS', 'Bypass de Seguridad', 'Divulgación de Información', 'Buffer Overflow', 'Command Injection', 'Path Traversal', 'Otro'] },
+    { label: 'Plataforma', name: 'plataforma', type: 'select', options: ['Windows', 'Linux', 'macOS', 'Android', 'iOS', 'Web', 'Cloud (AWS/Azure/GCP)', 'Multiplataforma', 'Hardware/IoT', 'Cisco IOS', 'VMware', 'Docker/Kubernetes'] },
     { label: 'CVE Asociado', name: 'cve', type: 'text' },
     { label: 'URL Referencia', name: 'url', type: 'text' },
   ] as FormField[]
@@ -81,9 +81,9 @@ const ZERODAYS_CONFIG = {
     { label: 'ID Zero-Day', name: 'idZD', type: 'text' },
     { label: 'Fecha', name: 'fecha', type: 'date', required: true },
     { label: 'Nombre Vulnerabilidad', name: 'nombre', type: 'text', required: true },
-    { label: 'Plataforma', name: 'plataforma', type: 'text' },
+    { label: 'Plataforma', name: 'plataforma', type: 'select', options: ['Windows', 'Linux', 'macOS', 'Android', 'iOS', 'Web', 'Cloud', 'Multiplataforma', 'Chrome', 'Firefox', 'Safari'] },
     { label: 'CVSS', name: 'cvss', type: 'number' },
-    { label: 'Estado', name: 'estado', type: 'text' },
+    { label: 'Estado', name: 'estado', type: 'select', options: ['Reportado', 'En Análisis', 'Mitigado', 'Explotado Activamente', 'Parcheado', 'Bajo Investigación'] },
     { label: 'URL', name: 'url', type: 'text' },
     { label: 'Descripción', name: 'descripcion', type: 'textarea' },
   ] as FormField[]
@@ -101,7 +101,7 @@ const CVES_CONFIG = {
     { label: 'Fecha Publicación', name: 'fecha', type: 'date', required: true },
     { label: 'Aplicativo', name: 'aplicativo', type: 'text' },
     { label: 'CVSS', name: 'cvss', type: 'number' },
-    { label: 'Estado', name: 'estado', type: 'text' },
+    { label: 'Estado', name: 'estado', type: 'select', options: ['Analizado', 'Pendiente', 'Mitigado', 'No Aplicable', 'En Revisión', 'Vulnerable', 'Parcheado'] },
     { label: 'Descripción', name: 'descripcion', type: 'textarea' },
     { label: 'URL', name: 'url', type: 'text' },
   ] as FormField[]
@@ -131,7 +131,7 @@ const SOURCES_CONFIG = {
   fields: [
     { label: 'Nombre Fuente', name: 'nombre', type: 'text', required: true },
     { label: 'Fecha', name: 'fecha', type: 'date', required: true },
-    { label: 'Tipo', name: 'tipo', type: 'text' },
+    { label: 'Tipo', name: 'tipo', type: 'select', options: ['RSS Feed', 'OSINT', 'Dark Web', 'Vendor Advisory', 'Social Media', 'Reporte Privado', 'Gobierno/CERT', 'Hacker Forum', 'Telegram Channel'] },
     { label: 'URL', name: 'url', type: 'text' },
     { label: 'Descripción', name: 'descripcion', type: 'textarea' },
   ] as FormField[]
@@ -146,8 +146,8 @@ const MITIGATIONS_CONFIG = {
   fields: [
     { label: 'Título', name: 'titulo', type: 'text', required: true },
     { label: 'Fecha', name: 'fecha', type: 'date', required: true },
-    { label: 'Categoría', name: 'categoria', type: 'text' },
-    { label: 'Prioridad', name: 'prioridad', type: 'select', options: ['Baja', 'Media', 'Alta'] },
+    { label: 'Categoría', name: 'categoria', type: 'select', options: ['Parche de Seguridad', 'Cambio de Configuración', 'Regla SIEM/Detección', 'Firma IDS/IPS', 'Entrenamiento/Concientización', 'Aislamiento de Red', 'Actualización de Software', 'Desactivación de Servicio', 'Otro'] },
+    { label: 'Prioridad', name: 'prioridad', type: 'select', options: ['Baja', 'Media', 'Alta', 'Crítica'] },
     { label: 'Descripción', name: 'descripcion', type: 'textarea' },
     { label: 'URL', name: 'url', type: 'text' },
   ] as FormField[]
