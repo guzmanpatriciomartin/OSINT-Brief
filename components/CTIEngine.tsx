@@ -183,13 +183,6 @@ export const CTIEngine: React.FC = () => {
                   dangerouslySetInnerHTML={{ __html: reportHtml }}
                 />
                 
-                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:row items-center justify-between gap-4 text-slate-400 text-sm no-print">
-                  <p>© 2026 CTI Flash Engine - Generado automáticamente</p>
-                  <div className="flex items-center gap-4">
-                    <span>MSRC v2.0</span>
-                    <span>Gemini 3 Flash</span>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}
