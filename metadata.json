@@ -1,0 +1,5 @@
+{
+  "name": "OSINT Brief Risk Suite",
+  "description": "A CTI Dashboard using public RSS feeds and local storage for Risk Management. No external AI API required.",
+  "requestFramePermissions": []
+}
