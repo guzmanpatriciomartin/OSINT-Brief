@@ -296,163 +296,37 @@ protectedApiRouter.use('/mitigaciones', createCrudRoutesFor('mitigaciones', Miti
 protectedApiRouter.use('/riesgos', createCrudRoutesFor('riesgos', Risk));
 protectedApiRouter.use('/cves', createCrudRoutesFor('cves', Cve));
 
-protectedApiRouter.post('/ai/analyze', async (req, res) => {
+protectedApiRouter.get('/ai/context', async (req, res) => {
     try {
-        if (!ai) return res.status(503).json({ message: "IA no disponible" });
-        const { query } = req.body;
-        const [incidents, risks] = await Promise.all([Incidente.find().limit(5), Risk.find().limit(5)]);
+        const [incidents, risks, alerts, cves, exploits, zerodays] = await Promise.all([
+            Incidente.find().sort({ fecha: -1 }).limit(10),
+            Risk.find().sort({ lastUpdated: -1 }).limit(10),
+            Alerta.find().sort({ fecha: -1 }).limit(10),
+            Cve.find().sort({ fecha: -1 }).limit(10),
+            Exploit.find().sort({ fecha: -1 }).limit(10),
+            ZeroDay.find().sort({ fecha: -1 }).limit(10)
+        ]);
         
-        const systemPrompt = `Eres un Analista Senior de Ciberseguridad. Responde a la consulta del usuario basándote en el contexto proporcionado y utilizando búsqueda en tiempo real si es necesario para obtener información actualizada sobre amenazas.`;
-        
-        const result = await ai.models.generateContent({ 
-          model: 'gemini-3-flash-preview', 
-          contents: [{ role: 'user', parts: [{ text: `Consulta: ${query}\n\nContexto Local: ${JSON.stringify({ incidents, risks })}` }] }],
-          config: {
-            systemInstruction: systemPrompt,
-            tools: [{ googleSearch: {} }]
-          }
+        res.json({
+            incidents,
+            risks,
+            alerts,
+            cves,
+            exploits,
+            zerodays
         });
-        res.json({ response: result.text });
-    } catch (error: any) { res.status(500).json({ message: "Error", error: error.message }); }
+    } catch (error: any) {
+        res.status(500).json({ message: "Error fetching context", error: error.message });
+    }
 });
 
-// --- NEW CTI GENERATION ROUTE ---
-apiRouter.post("/generate-cti", async (req, res) => {
-    const { cveId } = req.body;
-
-    if (!cveId || !cveId.match(/^CVE-\d{4}-\d{4,7}$/i)) {
-      return res.status(400).json({ error: "ID de CVE inválido. Formato: CVE-YYYY-XXXX" });
-    }
-
+// --- NEW CTI GENERATION ROUTE (DATA ONLY) ---
+apiRouter.get("/cve-data/:cveId", async (req, res) => {
     try {
-      if (!ai) {
-        return res.status(500).json({ error: "IA no configurada en el servidor." });
-      }
-
-      const systemPrompt = `
-        Eres un Analista Senior de Inteligencia de Amenazas (CTI).
-        Tu tarea es investigar y sintetizar información sobre una vulnerabilidad específica (CVE) utilizando búsqueda en tiempo real.
-        
-        REGLAS CRÍTICAS:
-        - El reporte DEBE estar estrictamente en ESPAÑOL.
-        - Usa un tono profesional, técnico y directo.
-        - Utiliza Google Search para obtener los datos más recientes y precisos (incluyendo CISA KEV, NVD, MITRE y avisos de proveedores).
-        
-        ESTRUCTURA DE SALIDA OBLIGATORIA (Markdown):
-        
-                ## Resumen Ejecutivo
-        Breve descripción de la vulnerabilidad, indicando el componente afectado, tipo de falla y nivel de riesgo.
-        Nota: Indica explícitamente si se encuentra o no en el catálogo CISA KEV.
-
-        ## Impacto
-        - Tipo de impacto: (RCE / Elevación de privilegios / DoS / Divulgación de información / etc.)
-        - Vector de ataque: Local / Remoto
-        - Privilegios requeridos: Ninguno / Bajo / Alto
-        - Interacción del usuario: Sí / No
-        - Alcance: Cambiado / No cambiado
-
-        ## Severidad
-        - CVSS v3.1 Base Score: X.X (Crítica / Alta / Media / Baja)
-        - Vector CVSS: CVSS:3.1/...
-        - Fuente: [NVD / Vendor / etc.]
-
-        ## Matriz de Riesgo CVSS v3.1
-        - Producto: [Producto]
-        - Componente: [Componente]
-        - Protocolo: [Protocolo]
-        - ¿Explotable remotamente sin autenticación?: Sí / No
-        - Puntaje Base: X.X
-        - Vector de Ataque: Red / Local
-        - Complejidad del Ataque: Baja / Alta
-        - Privilegios Requeridos: Ninguno / Bajo / Alto
-        - Interacción del Usuario: Ninguna / Requerida
-        - Alcance: Sin cambio / Cambiado
-        - Confidencialidad: Ninguno / Bajo / Alto
-        - Integridad: Ninguno / Bajo / Alto
-        - Disponibilidad: Ninguno / Bajo / Alto
-
-        ## Debilidad
-        Descripción detallada de la vulnerabilidad:
-        - Tipo de vulnerabilidad (ej. deserialización, type confusion, etc.)
-        - Componente afectado
-        - Condiciones de explotación
-        - Resultado de explotación
-        - CWE-XXX: [Nombre de la debilidad]
-
-        ## Información General
-        - CVE: [CVE-ID]
-        - Proveedor: [Vendor]
-        - Producto(s): [Productos afectados]
-        - Tipo: Vulnerabilidad de Seguridad
-        - Fecha de publicación: [Fecha]
-        - Última actualización: [Fecha]
-        - Fuente: Advisory oficial / NVD
-
-        ## Productos Afectados
-        | Producto | Versiones afectadas |
-        |----------|-------------------|
-        | [Producto 1] | [Versiones] |
-        | [Producto 2] | [Versiones] |
-
-        ## Explotación en la Naturaleza
-        - Explotación activa: Sí / No / Desconocido
-        - Incluido en KEV: Sí / No
-        - Fecha de inclusión KEV: [Fecha o N/A]
-        - Observaciones: [Detalles adicionales]
-
-        ## Observaciones CTI
-        - Posible abuso en campañas reales
-        - Técnicas MITRE ATT&CK relacionadas
-        - Relevancia para la organización
-
-        ## Parches y Mitigación
-        - Estado del parche: Disponible / No disponible
-        - Acción requerida: Aplicar actualizaciones de seguridad del proveedor
-        Mitigaciones adicionales:
-        - [Lista de mitigaciones]
-
-        ## Referencias
-        - [Lista de URLs de Advisory, NVD, MITRE, CISA KEV]
-      `;
-
-      const result = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [{ role: "user", parts: [{ text: `Realiza un análisis CTI completo para la vulnerabilidad ${cveId}.` }] }],
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: 0.2,
-          tools: [{ googleSearch: {} }],
-        },
-      });
-
-      const markdownReport = result.text || "No se pudo generar el reporte.";
-      
-      // Convert Markdown to HTML and add inline styles for email compatibility
-      let htmlReport = md.render(markdownReport);
-      
-      // Post-process HTML to add inline styles for email clients
-      htmlReport = htmlReport
-        .replace(/<h1>/gi, '<h1 style="color: #000000; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-top: 20px; margin-bottom: 15px; text-transform: uppercase;">')
-        .replace(/<h2>/gi, '<h2 style="color: #000000; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; margin-top: 25px; margin-bottom: 12px; border-top: 2px solid #000000; padding-top: 10px;">')
-        .replace(/<h3>/gi, '<h3 style="color: #000000; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px;">')
-        .replace(/<p>/gi, '<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #000000; margin: 10px 0;">')
-        .replace(/<ul>/gi, '<ul style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #000000; padding-left: 20px; margin-bottom: 15px;">')
-        .replace(/<li>/gi, '<li style="margin-bottom: 5px;">')
-        .replace(/<table>/gi, '<table style="border-collapse: collapse; width: 100%; margin: 20px 0; font-family: Arial, sans-serif; font-size: 13px; border: 2px solid #000000;">')
-        .replace(/<thead>/gi, '<thead style="background-color: #000000; color: #ffffff;">')
-        .replace(/<th>/gi, '<th style="border: 1px solid #000000; text-align: left; padding: 10px; font-weight: bold; background-color: #000000; color: #ffffff;">')
-        .replace(/<td>/gi, '<td style="border: 1px solid #000000; text-align: left; padding: 10px; color: #000000;">')
-        .replace(/<hr\s*\/?>/gi, '')
-        .replace(/<strong>/gi, '<strong style="color: #000000; font-weight: bold;">')
-        .replace(/<a /gi, '<a style="color: #000000; text-decoration: none; font-weight: bold;" ');
-
-      // Wrap in a container
-      htmlReport = `<div style="max-width: 800px; margin: 0 auto; padding: 20px; background-color: #ffffff;">${htmlReport}</div>`;
-
-      res.json({ html: htmlReport, markdown: markdownReport });
+        const cve = await Cve.findOne({ cveId: new RegExp(`^${req.params.cveId}$`, 'i') });
+        res.json(cve || { message: "CVE not found in local DB" });
     } catch (error: any) {
-      console.error("Error generating CTI:", error);
-      res.status(500).json({ error: "Error interno al procesar el reporte: " + error.message });
+        res.status(500).json({ error: error.message });
     }
 });
 
